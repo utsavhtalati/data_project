@@ -22,11 +22,11 @@ const combinedData = [...data2021, ...data2022].map((d, index) => ({
 // PCA Transformation
 const pcaInput = combinedData.map((d) => [d.pooledDaysNorm, d.percentageDaysNorm]);
 const pcaTensor = tf.tensor(pcaInput);
-const pca = tf.svd(pcaTensor);
+const { u } = tf.svd(pcaTensor);
 
 // Extract PCA Components
-const pc1 = pca.u.slice([0, 0], [-1, 1]).arraySync();
-const pc2 = pca.u.slice([0, 1], [-1, 1]).arraySync();
+const pc1 = u.slice([0, 0], [-1, 1]).arraySync();
+const pc2 = u.slice([0, 1], [-1, 1]).arraySync();
 combinedData.forEach((d, i) => {
     d.pc1 = pc1[i][0];
     d.pc2 = pc2[i][0];
@@ -41,7 +41,7 @@ const clusters = combinedData.reduce((acc, item) => {
 
 // Render Charts After DOM Load
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. PCA Transformation Graph
+    // PCA Chart
     const pcaCtx = document.getElementById('pcaChart').getContext('2d');
     new Chart(pcaCtx, {
         type: 'scatter',
@@ -49,12 +49,16 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [
                 {
                     label: '2021 Data',
-                    data: combinedData.filter((d) => d.year === 2021).map((d) => ({ x: d.pc1, y: d.pc2 })),
+                    data: combinedData
+                        .filter((d) => d.year === 2021)
+                        .map((d) => ({ x: d.pc1, y: d.pc2 })),
                     backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 },
                 {
                     label: '2022 Data',
-                    data: combinedData.filter((d) => d.year === 2022).map((d) => ({ x: d.pc1, y: d.pc2 })),
+                    data: combinedData
+                        .filter((d) => d.year === 2022)
+                        .map((d) => ({ x: d.pc1, y: d.pc2 })),
                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                 },
             ],
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    // 2. Bar Chart of Antimicrobials Found
+    // Bar Chart
     const barCtx = document.getElementById('barChart').getContext('2d');
     new Chart(barCtx, {
         type: 'bar',
@@ -106,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Antimicrobials Metrics (Pooled Days & Percentage Days)',
+                    text: 'Antimicrobial Metrics (Pooled Days & Percentage Days)',
                 },
             },
             responsive: true,
@@ -118,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    // 3. Clustering by Spectrum
+    // Cluster Chart
     const clusterCtx = document.getElementById('clusterChart').getContext('2d');
     new Chart(clusterCtx, {
         type: 'doughnut',
